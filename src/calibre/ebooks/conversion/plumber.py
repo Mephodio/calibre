@@ -636,6 +636,10 @@ OptionRecommendation(name='italicize_common_cases',
     help=_('Look for common words and patterns that denote '
            'italics and italicize them.')),
 
+OptionRecommendation(name='remove_page_titles',
+    recommended_value=True, level=OptionRecommendation.LOW,
+    help=_('Remove page titles and numbers.')),
+
 OptionRecommendation(name='fix_indents',
     recommended_value=True, level=OptionRecommendation.LOW,
     help=_('Turn indentation created from multiple non-breaking space entities '

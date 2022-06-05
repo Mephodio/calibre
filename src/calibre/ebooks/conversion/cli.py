@@ -49,7 +49,7 @@ HEURISTIC_OPTIONS = ['markup_chapter_headings',
                       'html_unwrap_factor', 'unwrap_lines',
                       'delete_blank_paragraphs', 'format_scene_breaks',
                       'dehyphenate', 'renumber_headings',
-                      'replace_scene_breaks']
+                      'replace_scene_breaks', 'remove_page_titles']
 
 DEFAULT_TRUE_OPTIONS = HEURISTIC_OPTIONS + ['remove_fake_margins']
 

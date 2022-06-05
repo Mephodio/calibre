@@ -204,6 +204,13 @@
        </widget>
       </item>
       <item>
+       <widget class="QCheckBox" name="opt_remove_page_titles">
+        <property name="text">
+         <string>Remove page titles and numbers</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QCheckBox" name="opt_fix_indents">
         <property name="text">
          <string>Replace entity indents with CSS indents</string>

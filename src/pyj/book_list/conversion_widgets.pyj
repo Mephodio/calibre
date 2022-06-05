@@ -325,6 +325,7 @@ def heuristics(container):
     add(checkbox, 'dehyphenate', _('Remove unnecessary hyphens'))
     add(checkbox, 'italicize_common_cases', _('Italicize common words and patterns'))
     add(checkbox, 'fix_indents', _('Replace entity indents with CSS indents'))
+    add(checkbox, 'remove_page_titles', _('Remove page titles and numbers'))
 # }}}
 
 # Page setup {{{

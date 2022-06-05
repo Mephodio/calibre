@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import calibre.ebooks.conversion.dev as dev
 
 __license__   = 'GPL v3'
 __copyright__ = '2010, Kovid Goyal <kovid@kovidgoyal.net>'
@@ -742,6 +743,10 @@ class HeuristicProcessor:
         is_abbyy = self.is_abbyy(html)
         if is_abbyy:
             html = self.abbyy_processor(html)
+
+        if getattr(self.extra_opts, 'remove_page_titles', False):
+            html = dev.remove_page_titles(html)
+        # html = dev.add_nbsp_to_code(html)
 
         # Arrange line feeds and </p> tags so the line_length and no_markup functions work correctly
         html = self.arrange_htm_line_endings(html)

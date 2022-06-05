@@ -231,7 +231,7 @@ OPTIONS = {
         'debug': ('debug_pipeline',),
 
         'heuristics': (
-            'enable_heuristics', 'markup_chapter_headings',
+            'enable_heuristics', 'markup_chapter_headings', 'remove_page_titles',
             'italicize_common_cases', 'fix_indents', 'html_unwrap_factor',
             'unwrap_lines', 'delete_blank_paragraphs', 'format_scene_breaks',
             'replace_scene_breaks', 'dehyphenate', 'renumber_headings'),

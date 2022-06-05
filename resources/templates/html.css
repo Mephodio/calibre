@@ -230,6 +230,7 @@ i, cite, em, var, dfn {
 
 tt, code, kbd, samp {
   font-family: monospace;
+  white-space: pre;
 }
 
 u, ins {
