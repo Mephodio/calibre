@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 
-import calibre.ebooks.conversion.dev as dev
-
 __license__   = 'GPL v3'
 __copyright__ = '2010, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
 import re
 from math import ceil
+from bs4 import BeautifulSoup
 from calibre.ebooks.conversion.preprocess import DocAnalysis, Dehyphenator
 from calibre.utils.logging import default_log
 from calibre.utils.wordcount import get_wordcount_obj
@@ -40,6 +39,7 @@ class HeuristicProcessor:
         self.scene_break_open = '<p class="scenebreak" style="text-align:center; text-indent:0%; margin-top:1em; margin-bottom:1em; page-break-before:avoid">'
         self.common_in_text_endings = '[\"\'—’”,\\.!\\?\\…\\)„\\w]'
         self.common_in_text_beginnings = '[\\w\'\"“‘‛]'
+        self.pagenum = re.compile(r'[\d._/\-ivxlcdm]+', re.IGNORECASE)
 
     def is_pdftohtml(self, src):
         return '<!-- created by calibre\'s pdftohtml -->' in src[:1000]
@@ -727,6 +727,115 @@ class HeuristicProcessor:
         html = abbyy_line.sub(convert_styles, html)
         return html
 
+    def remove_page_titles(self, html):
+        soup = BeautifulSoup(html, 'html.parser')
+
+        prev_i = None
+        prev_p = None
+        prev_a = None
+        prev_marked = False
+        prev_footer = None
+
+        cur_i = None
+        cur_p = None
+        cur_a = None
+        cur_marked = False
+        cur_footer = None
+
+        while True:
+
+            # print('=== iteration ===')
+            list_of_p = soup.find_all('p')
+            found_anything = False
+            is_newpage = False
+
+            for i in range(len(list_of_p)):
+                p = list_of_p[i]
+                a = self.check_if_tag_is_page_start(p)
+
+                # check last line on previous page (footer)
+                if a != False and i > 0:
+                    if cur_footer == None:
+                        cur_footer = list_of_p[i - 1]
+                    else:
+                        prev_footer = cur_footer
+                        cur_footer = list_of_p[i - 1]
+
+                        if self.compare_page_headers(prev_footer.text, cur_footer.text):
+
+                            found_anything = True
+                            # print(f'found footer: {prev_footer.text}')
+
+                            prev_footer.decompose()
+
+                if a != False or is_newpage:
+
+                    is_newpage = True
+                    if not p.text.strip():
+                        # print('skipping line', p)
+                        continue
+                    is_newpage = False
+
+                    if cur_i == None:
+                        cur_i = i
+                        cur_p = p
+                        cur_a = a
+                        cur_marked = False
+                    else:
+                        if prev_marked:
+                            if prev_a != False:
+                                list_of_p[prev_i + 1].insert_before(prev_a)
+                            prev_p.decompose()
+
+                        prev_i = cur_i
+                        prev_p = cur_p
+                        prev_a = cur_a
+                        prev_marked = cur_marked
+
+                        cur_i = i
+                        cur_p = p
+                        cur_a = a
+                        cur_marked = False
+
+                        # check first line on current page (header)
+                        if self.compare_page_headers(prev_p.text, cur_p.text):
+
+                            found_anything = True
+
+                            if prev_a != False:
+                                list_of_p[prev_i + 1].insert_before(prev_a)
+                            prev_p.decompose()
+
+                            cur_marked = True
+
+            if not found_anything:
+                break
+
+        if cur_i != None and cur_marked:
+            if cur_i < len(list_of_p) - 1:
+                list_of_p[cur_i + 1].insert_before(cur_a)
+            cur_p.decompose()
+        if cur_footer != None:
+            cur_footer.decompose()
+
+        return str(soup)
+
+    def check_if_tag_is_page_start(self, e):
+        for a in e.findAll('a'):
+            if a.has_attr('id') and len(a['id']) >= 2 and a['id'][0] == 'p' and a['id'][1] >= '0' and a['id'][1] <= '9':
+                return a
+
+        return False
+
+    def compare_page_headers(self, line1, line2):
+
+        # print('comparing', line1, 'and', line2)
+
+        line1 = self.pagenum.sub('\1', line1)
+        line2 = self.pagenum.sub('\1', line2)
+
+        return line1 == line2
+
     def __call__(self, html):
         self.log.debug("*********  Heuristic processing HTML  *********")
         # Count the words in the document to estimate how many chapters to look for and whether
@@ -745,7 +854,7 @@ class HeuristicProcessor:
             html = self.abbyy_processor(html)
 
         if getattr(self.extra_opts, 'remove_page_titles', False):
-            html = dev.remove_page_titles(html)
+            html = self.remove_page_titles(html)
         # html = dev.add_nbsp_to_code(html)
 
         # Arrange line feeds and </p> tags so the line_length and no_markup functions work correctly
